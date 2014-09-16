@@ -66,17 +66,15 @@ void setup() {
 void loop() {  
   newP = readPressure(pressurePin);
   if (newP != oldP){
-    delta_t = millis() - t_last;
     if (newP == 0){
       sendNote(channel, getNote(newNote), 0);
       sendCC(channel, cc_volume, 0);
     }
-    if (oldP == 0){
+    else if (oldP == 0){
       sendNote(channel, getNote(newNote), vMax);
     }
-    else if (delta_t >= t_wait){
+    else {
       sendCC(channel, cc_volume, newP);
-      t_last = millis();
     }
     oldP = newP;
   }
