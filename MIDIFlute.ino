@@ -10,7 +10,8 @@ const int note_0_pin = 4;
 const int note_1_pin = 3;
 const int note_2_pin = 2;
 const int note_3_pin = 0;
-const int note_4_pin = 1;
+const int note_4_pin = 13;
+const byte noise = 0xA;
 const byte playNote = 0x90;
 const byte afterTouch = 0xD0;
 const byte cc_windController = 0x02;
@@ -44,8 +45,8 @@ byte oldP = 0,
      oldNote;
 
 void setup() {
-  Serial.begin(9600); 
-  while (!Serial) ;
+  Serial1.begin(31250); 
+  while (!Serial1) ;
   
   pinMode(mode_0_pin, INPUT_PULLUP);
   pinMode(mode_1_pin, INPUT_PULLUP);
@@ -69,14 +70,16 @@ void loop() {
     if (newP == 0){
       sendNote(channel, getNote(newNote), 0);
       sendCC(channel, cc_volume, 0);
+      oldP = 0;
     }
     else if (oldP == 0){
       sendNote(channel, getNote(newNote), vMax);
+      oldP = newP;
     }
-    else {
-      sendCC(channel, cc_volume, newP);
+    else if (millis() - t_last > t_wait){
+      sendCVolume(channel, newP);
+      t_last = millis();
     }
-    oldP = newP;
   }
   newNote = readNote();
   channel = readChannel();
@@ -128,18 +131,23 @@ byte readController(int pin){
 }
     
 void sendNote(byte channel, byte note, byte velocity){
-  Serial.write(playNote + channel);
-  Serial.write(note);
-  Serial.write(velocity);
+  Serial1.write(playNote + channel);
+  Serial1.write(note);
+  Serial1.write(velocity);
 }
 
 void sendCC(byte channel, byte controller, byte value){
-  Serial.write(cc + channel);
-  Serial.write(controller);
-  Serial.write(value);
+  Serial1.write(cc + channel);
+  Serial1.write(controller);
+  Serial1.write(value);
+}
+
+void sendCVolume(byte channel, byte pressure){
+  sendCC(channel, cc_volume, pressure);
+  oldP = pressure;
 }
 
 void sendAftertouch(byte channel, byte pressure){
-  Serial.write(afterTouch + channel);
-  Serial.write(pressure);
+  Serial1.write(afterTouch + channel);
+  Serial1.write(pressure);
 }
