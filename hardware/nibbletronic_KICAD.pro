@@ -1,4 +1,4 @@
-update=01/01/2016 19:29:48
+update=02/01/2016 13:12:06
 version=1
 last_client=kicad
 [pcbnew]
@@ -23,8 +23,16 @@ ModuleOutlineThickness=0.150000000000
 [cvpcb]
 version=1
 NetIExt=net
-[general]
+[schematic_editor]
 version=1
+PageLayoutDescrFile=
+PlotDirectoryName=
+SubpartIdSeparator=0
+SubpartFirstId=65
+NetFmtName=
+SpiceForceRefPrefix=0
+SpiceUseNetNumbers=0
+LabSize=60
 [eeschema]
 version=1
 LibDir=
@@ -58,14 +66,6 @@ LibName26=opto
 LibName27=atmel
 LibName28=contrib
 LibName29=valves
-LibName30=arduino_micro
-[schematic_editor]
+LibName30=nibbletronic_custom_components
+[general]
 version=1
-PageLayoutDescrFile=
-PlotDirectoryName=
-SubpartIdSeparator=0
-SubpartFirstId=65
-NetFmtName=
-SpiceForceRefPrefix=0
-SpiceUseNetNumbers=0
-LabSize=60
