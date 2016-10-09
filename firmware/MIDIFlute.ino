@@ -1,16 +1,12 @@
 
 const int pressurePin = A0;  // Analog input pin that the potentiometer is attached to
+const int octavePin = A1;
 
-const int mode_0_pin = 7;
-const int mode_1_pin = 8;
-const int mode_2_pin = 9;
-const int channel_0_pin = 5;
-const int channel_1_pin = 6;
 const int note_0_pin = 4;
 const int note_1_pin = 3;
 const int note_2_pin = 2;
 const int note_3_pin = 0;
-const int note_4_pin = 13;
+
 const byte noise = 0xA;
 const byte playNote = 0x90;
 const byte afterTouch = 0xD0;
@@ -53,16 +49,13 @@ void setup() {
   Serial1.begin(31250); 
   while (!Serial1) ;
   
-  pinMode(mode_0_pin, INPUT_PULLUP);
-  pinMode(mode_1_pin, INPUT_PULLUP);
   pinMode(note_0_pin, INPUT_PULLUP);
   pinMode(note_1_pin, INPUT_PULLUP);
   pinMode(note_2_pin, INPUT_PULLUP);
   pinMode(note_3_pin, INPUT_PULLUP);
-  pinMode(note_4_pin, INPUT_PULLUP);
-  pinMode(channel_0_pin, INPUT_PULLUP);
-  pinMode(channel_1_pin, INPUT_PULLUP);
-
+  pinMode(octavePin, INPUT);
+  pinMode(pressurePin, INPUT);
+  
   newNote = notes[0];
   oldNote = notes[0];
   channel = 0;
@@ -108,7 +101,6 @@ int readNote(){
   if (digitalRead(note_1_pin) == LOW){buttons += 2;}
   if (digitalRead(note_2_pin) == LOW){buttons += 4;}
   if (digitalRead(note_3_pin) == LOW){buttons += 8;}
-  if (digitalRead(note_4_pin) == LOW){buttons += 16;}
   return buttons + scaleOffset + getOctave();
 }
 
@@ -128,6 +120,7 @@ byte readChannel(){
 
 byte getOctave(){
   octaveOffset = 0;
+  int sliderValue = analogRead(octavePin);
   if (digitalRead(mode_0_pin) == LOW){octaveOffset += 14;}
   if (digitalRead(channel_1_pin) == LOW){octaveOffset += 28;}
   return octaveOffset;
