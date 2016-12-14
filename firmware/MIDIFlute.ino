@@ -12,10 +12,11 @@ const byte pitchBend = 0x70;  // Pitch bend
 const byte cc = 0xB0;         // Continous Controller
 // ...for MIDI parameters (Second and third transmitted byte)
 const byte cc_volume = 0x07;  // Selects channel volume (coarse) as CC target
+const byte cc_detune = 0x2D;
 const byte midiMax = 0x7F;    // The highest possible parameter value (127 or 0b1111111)
 const byte midiMin = 0;       // A zero, just giving it a fancy name here
 
-const byte pMin = 12;         // The minimal pressure the sensor has to pick up to trigger a note
+const byte pMin = 48;         // The minimal pressure the sensor has to pick up to trigger a note
 // The pressureCurve is an array thatallows to map the linear readings of the sensor to a non linear
 // increase of loudness. It is also useful to increase the usable pressure range
 const byte pressureCurve[] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 16, 16, 16, 17, 17, 17, 18, 18, 18, 19, 19, 19, 20, 20, 20, 21, 21, 21, 22, 22, 22, 23, 23, 23, 24, 24, 24, 25, 25, 25, 26, 26, 26, 27, 27, 27, 28, 28, 28, 29, 29, 29, 30, 30, 30, 31, 31, 31, 32, 32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 38, 39, 39, 40, 40, 41, 41, 42, 42, 43, 43, 44, 44, 45, 45, 46, 46, 47, 47, 48, 48, 49, 49, 50, 50, 51, 51, 52, 52, 53, 53, 54, 54, 55, 55, 56, 56, 57, 57, 58, 58, 59, 59, 60, 60, 61, 61, 62, 62, 63, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
@@ -23,11 +24,11 @@ const int lPressureCurve = 259; // The size of the pressureCurve array. Has to b
 // Detunes is a second pressure curve that can be mapped to any continous controller
 // it gives 50% output for most of the time with linear increase at the upper end.
 // This can be used to modulate a synthesizer depending on the applied pressure
-const byte detunes[] = {63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94};
+const signed char detunes[] = {63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94};
 
 // the notes array takes care of mapping the 128 notes of the MIDI scale to the one the nibbleTronic uses
 // note that c and f appear twice resulting in 14 notes per octave
-const byte notes[] = {0, 0, 1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 14, 15, 16, 17, 17, 18, 19, 20, 21, 22, 23, 24, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 33, 34, 35, 36, 36, 37, 38, 39, 40, 41, 41, 42, 43, 44, 45, 46, 47, 48, 48, 49, 50, 51, 52, 53, 53, 54, 55, 56, 57, 58, 59, 60, 60, 61, 62, 63, 64, 65, 65, 66, 67, 68, 69, 70, 71, 72, 72, 73, 74, 75, 76, 77, 77, 78, 79, 80, 81, 82, 83, 84, 84, 85, 86, 87, 88, 89, 89, 90, 91, 92, 93, 94, 95, 96, 96, 97, 98, 99, 100, 101, 101, 102, 103, 104, 105, 106, 107, 108, 108, 109, 110, 111, 112, 113, 113, 114, 115, 116, 117, 118, 119, 120, 120, 121, 122, 123, 124, 125, 125, 126, 127};
+const signed char notes[] = {0, 0, 1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 14, 15, 16, 17, 17, 18, 19, 20, 21, 22, 23, 24, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 33, 34, 35, 36, 36, 37, 38, 39, 40, 41, 41, 42, 43, 44, 45, 46, 47, 48, 48, 49, 50, 51, 52, 53, 53, 54, 55, 56, 57, 58, 59, 60, 60, 61, 62, 63, 64, 65, 65, 66, 67, 68, 69, 70, 71, 72, 72, 73, 74, 75, 76, 77, 77, 78, 79, 80, 81, 82, 83, 84, 84, 85, 86, 87, 88, 89, 89, 90, 91, 92, 93, 94, 95, 96, 96, 97, 98, 99, 100, 101, 101, 102, 103, 104, 105, 106, 107, 108, 108, 109, 110, 111, 112, 113, 113, 114, 115, 116, 117, 118, 119, 120, 120, 121, 122, 123, 124, 125, 125, 126, 127};
 
 const byte scaleOffset = 28; // we start at the second octave
 const byte octaves[] = {0, 14, 28, 42, 56, 70, 84, 98, 112}; // nine octaves
@@ -40,25 +41,50 @@ int requiredDeltaP = 3;
 
 unsigned long t_last, now;
 
+void sendCC(byte channel, byte controller, byte value) {
+  Serial1.write(cc + channel);
+  Serial1.write(controller);
+  Serial1.write(value);
+}
+
 class pressureControlledMIDI{
   private:
-  int oldP = 0, newP = 0;
-  int noiseTolerance;
-  byte CC_target;
-  byte values[];
-  int nValues;
-  int threshold, upperLimit;
+  int _oldValue = 0, _newValue = 0;
+  int _noiseTolerance;
+  byte _CC_target;
+  byte *_values;
+  int _nValues;
+  int _threshold, _upperLimit;
 
   public:
-  pressureControlledMIDI(int threshold, byte CC_target, byte values[], int nValues, int noiseTolerance = 0){
-    noiseTolerance = noiseTolerance;
-    CC_target = CC_target;
-    values = values;
-    nValues = nValues;
-    threshold = threshold;
-    upperLimit = threshold + nValues;
+  pressureControlledMIDI(int threshold, byte CC_target, byte values[], int nValues, int noiseTolerance){
+    _noiseTolerance = noiseTolerance;
+    _CC_target = CC_target;
+    _values = values;
+    _nValues = nValues;
+    _threshold = threshold;
   }
+  
+  bool update(int pressure){
+    int pressureIndex = constrain(pressure - _threshold, 0, _nValues - 1);
+    _newValue = _values[pressureIndex];
+    signed char delta = abs(_oldValue - _newValue);
+    Serial.print(_oldValue);
+    Serial.print("\t");
+    Serial.print(_newValue);
+    Serial.print("\t");
+    Serial.println(delta);
     
+    if(delta > _noiseTolerance){
+      _oldValue = _newValue;
+      return true;
+    }else{
+      return false;
+    }
+  }
+  void send(){
+    sendCC(2, 3, 4);
+  }  
 };
 
 byte buttons,
@@ -69,19 +95,6 @@ byte buttons,
      oldNote,
      oldCOne, newCOne,
      oldCTwo, newCTwo, octaveOffset;
-
-byte readPressure(int pin) {
-  sensorValue = analogRead(pin);
-  if (sensorValue <= pMin) {
-    return 0;
-  }
-  else
-  {
-    // make sure you stay inside the range of the pressure curve array
-    int pressureIndex = min(lPressureCurve, int(sensorValue - pMin));
-    return pressureCurve[pressureIndex];
-  }
-}
 
 int readNote() {
   buttons = 0;
@@ -130,19 +143,11 @@ void sendPitchBend(byte channel, int sensorOutput) {
   Serial1.write(msb);
 }
 
-void sendCC(byte channel, byte controller, byte value) {
-  Serial1.write(cc + channel);
-  Serial1.write(controller);
-  Serial1.write(value);
-}
-
-void sendCVolume(byte channel, byte pressure) {
-  sendCC(channel, cc_volume, pressure);
-  oldP = pressure;
-}
-
+pressureControlledMIDI volume(pMin, cc_volume, pressureCurve, lPressureCurve, 2);
+pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0);
 
 void setup() {
+  Serial.begin(9600);
   Serial1.begin(31250);
   while (!Serial1) ;
 
@@ -161,12 +166,13 @@ void setup() {
 
 void loop() {
   now = millis();
-  newP = readPressure(PRESSURE_PIN);
-  if (abs(newP - oldP) >= requiredDeltaP\
-      && now - t_last > t_wait) {
-    sendCVolume(channel, newP);
-    t_last = millis();
+  int pressure = analogRead(PRESSURE_PIN);
+  if(volume.update(pressure)){
+    volume.send();
   }
+  /*if(detune.update(pressure)){
+    detune.send();
+  }*/
 
   newNote = readNote();
   if (newNote != oldNote) {
