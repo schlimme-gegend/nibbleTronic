@@ -1,3 +1,4 @@
+#include <MIDI.h>
 // defining pin assignments as macros to save precious RAM for variables
 #define PRESSURE_PIN A0
 #define OCTAVE_PIN A1
@@ -41,6 +42,8 @@ int requiredDeltaP = 3;
 
 unsigned long t_last, now;
 
+//MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, din_5);
+MIDI_CREATE_DEFAULT_INSTANCE()
 void sendCC(byte channel, byte controller, byte value) {
   Serial1.write(cc + channel);
   Serial1.write(controller);
@@ -55,14 +58,24 @@ class pressureControlledMIDI{
   byte *_values;
   int _nValues;
   int _threshold, _upperLimit;
+  
 
   public:
-  pressureControlledMIDI(int threshold, byte CC_target, byte values[], int nValues, int noiseTolerance){
+  midi::MidiInterface<HardwareSerial> MIDI;
+  pressureControlledMIDI(int threshold,\
+                         byte CC_target,\
+                         byte values[],\
+                         int nValues,\
+                         int noiseTolerance,\
+                         bool activateMidi = false){
     _noiseTolerance = noiseTolerance;
     _CC_target = CC_target;
     _values = values;
     _nValues = nValues;
     _threshold = threshold;
+    if(activateMidi){
+      MIDI = midi::MidiInterface<HardwareSerial>((HardwareSerial&)Serial1);
+    }
   }
   
   bool update(int pressure){
@@ -83,7 +96,7 @@ class pressureControlledMIDI{
     }
   }
   void send(){
-    sendCC(2, 3, 4);
+    MIDI.sendControlChange(_CC_target, _newValue, 1);
   }  
 };
 
@@ -143,13 +156,13 @@ void sendPitchBend(byte channel, int sensorOutput) {
   Serial1.write(msb);
 }
 
-pressureControlledMIDI volume(pMin, cc_volume, pressureCurve, lPressureCurve, 2);
-pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0);
+pressureControlledMIDI volume(pMin, cc_volume, pressureCurve, lPressureCurve, 2, din_5);
+pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0, din_5);
 
 void setup() {
   Serial.begin(9600);
-  Serial1.begin(31250);
-  while (!Serial1) ;
+  din_5.begin();
+  while (!Serial);
 
   pinMode(NOTE_0_PIN, INPUT_PULLUP);
   pinMode(NOTE_1_PIN, INPUT_PULLUP);
@@ -176,8 +189,8 @@ void loop() {
 
   newNote = readNote();
   if (newNote != oldNote) {
-    sendNote(channel, notes[oldNote], 0);
-    sendNote(channel, notes[newNote], midiMax);
+    din_5.sendNoteOn(notes[oldNote], 0, channel);
+    din_5.sendNoteOn(notes[newNote], midiMax, channel);
     oldNote = newNote;
   }
 }
