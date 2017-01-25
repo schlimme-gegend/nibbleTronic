@@ -49,11 +49,11 @@ X D7 29 -500 150 200 R 50 50 1 1 B
 ENDDRAW
 ENDDEF
 #
-# Battery
+# Battery-RESCUE-nibbletronic_KICAD
 #
-DEF Battery BT 0 0 N Y 1 F N
+DEF Battery-RESCUE-nibbletronic_KICAD BT 0 0 N Y 1 F N
 F0 "BT" 100 50 50 H V L CNN
-F1 "Battery" 100 -50 50 H V L CNN
+F1 "Battery-RESCUE-nibbletronic_KICAD" 100 -50 50 H V L CNN
 F2 "" 0 40 50 V V C CNN
 F3 "" 0 40 50 V V C CNN
 DRAW
@@ -77,14 +77,16 @@ F2 "" 0 0 50 H V C CNN
 F3 "" 0 0 50 H V C CNN
 $FPLIST
  Diode_*
- D-Pak_TO252AA
+ D-*
  *SingleDiode
  *_Diode_*
  *SingleDiode*
+ D_*
 $ENDFPLIST
 DRAW
-P 2 0 1 6 -50 50 -50 -50 N
-P 3 0 1 0 50 50 -50 0 50 -50 F
+P 2 0 1 8 -50 50 -50 -50 N
+P 2 0 1 0 50 0 -50 0 N
+P 4 0 1 8 50 50 50 -50 -50 0 50 50 N
 X K 1 -150 0 100 R 50 50 1 1 P
 X A 2 150 0 100 L 50 50 1 1 P
 ENDDRAW
@@ -178,11 +180,11 @@ X V_EX 6 250 -400 200 U 50 50 1 1 U
 ENDDRAW
 ENDDEF
 #
-# POT
+# POT-RESCUE-nibbletronic_KICAD
 #
-DEF POT RV 0 40 Y N 1 F N
+DEF POT-RESCUE-nibbletronic_KICAD RV 0 40 Y N 1 F N
 F0 "RV" 0 -80 50 H V C CNN
-F1 "POT" 0 0 50 H V C CNN
+F1 "POT-RESCUE-nibbletronic_KICAD" 0 0 50 H V C CNN
 F2 "" 0 0 50 H V C CNN
 F3 "" 0 0 50 H V C CNN
 DRAW

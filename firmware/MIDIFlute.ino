@@ -12,6 +12,7 @@ const byte pitchBend = 0x70;  // Pitch bend
 const byte cc = 0xB0;         // Continous Controller
 // ...for MIDI parameters (Second and third transmitted byte)
 const byte cc_volume = 0x07;  // Selects channel volume (coarse) as CC target
+const byte cc_expr = 0xB;     // Selects Expression as CC target This is interpreted as volume by the Volca Bass
 const byte cc_detune = 0x2D;
 const byte midiMax = 0x7F;    // The highest possible parameter value (127 or 0b1111111)
 const byte midiMin = 0;       // A zero, just giving it a fancy name here
@@ -28,7 +29,7 @@ const signed char detunes[] = {63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 6
 
 // the notes array takes care of mapping the 128 notes of the MIDI scale to the one the nibbleTronic uses
 // note that c and f appear twice resulting in 14 notes per octave
-const signed char notes[] = {0, 0, 1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 14, 15, 16, 17, 17, 18, 19, 20, 21, 22, 23, 24, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 33, 34, 35, 36, 36, 37, 38, 39, 40, 41, 41, 42, 43, 44, 45, 46, 47, 48, 48, 49, 50, 51, 52, 53, 53, 54, 55, 56, 57, 58, 59, 60, 60, 61, 62, 63, 64, 65, 65, 66, 67, 68, 69, 70, 71, 72, 72, 73, 74, 75, 76, 77, 77, 78, 79, 80, 81, 82, 83, 84, 84, 85, 86, 87, 88, 89, 89, 90, 91, 92, 93, 94, 95, 96, 96, 97, 98, 99, 100, 101, 101, 102, 103, 104, 105, 106, 107, 108, 108, 109, 110, 111, 112, 113, 113, 114, 115, 116, 117, 118, 119, 120, 120, 121, 122, 123, 124, 125, 125, 126, 127};
+const signed char notes[] = {0, 1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 14, 15, 16, 17, 17, 18, 19, 20, 21, 22, 23, 24, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 33, 34, 35, 36, 36, 37, 38, 39, 40, 41, 41, 42, 43, 44, 45, 46, 47, 48, 48, 49, 50, 51, 52, 53, 53, 54, 55, 56, 57, 58, 59, 60, 60, 61, 62, 63, 64, 65, 65, 66, 67, 68, 69, 70, 71, 72, 72, 73, 74, 75, 76, 77, 77, 78, 79, 80, 81, 82, 83, 84, 84, 85, 86, 87, 88, 89, 89, 90, 91, 92, 93, 94, 95, 96, 96, 97, 98, 99, 100, 101, 101, 102, 103, 104, 105, 106, 107, 108, 108, 109, 110, 111, 112, 113, 113, 114, 115, 116, 117, 118, 119, 120, 120, 121, 122, 123, 124, 125, 125, 126, 127, 127};
 
 const byte scaleOffset = 28; // we start at the second octave
 const byte octaves[] = {0, 14, 28, 42, 56, 70, 84, 98, 112}; // nine octaves
@@ -45,6 +46,11 @@ void sendCC(byte channel, byte controller, byte value) {
   Serial1.write(cc + channel);
   Serial1.write(controller);
   Serial1.write(value);
+  Serial.print("CC");
+  Serial.print("\t");
+  Serial.print(controller);
+  Serial.print("\t");
+  Serial.println(value);
 }
 
 class pressureControlledMIDI{
@@ -69,11 +75,6 @@ class pressureControlledMIDI{
     int pressureIndex = constrain(pressure - _threshold, 0, _nValues - 1);
     _newValue = _values[pressureIndex];
     signed char delta = abs(_oldValue - _newValue);
-    Serial.print(_oldValue);
-    Serial.print("\t");
-    Serial.print(_newValue);
-    Serial.print("\t");
-    Serial.println(delta);
     
     if(delta > _noiseTolerance){
       _oldValue = _newValue;
@@ -82,13 +83,12 @@ class pressureControlledMIDI{
       return false;
     }
   }
-  void send(){
-    sendCC(2, 3, 4);
+  void send(byte channel){
+    sendCC(channel, _CC_target, _newValue);
   }  
 };
 
-byte buttons,
-     channel,
+byte channel,
      channelSelect,
      modeSelect,
      newNote,
@@ -97,17 +97,17 @@ byte buttons,
      oldCTwo, newCTwo, octaveOffset;
 
 int readNote() {
-  buttons = 0;
-  if (digitalRead(NOTE_0_PIN) == LOW) {
+  byte buttons = 0;
+  if (digitalRead(NOTE_0_PIN) == HIGH) {
     buttons += 1;
   }
-  if (digitalRead(NOTE_1_PIN) == LOW) {
+  if (digitalRead(NOTE_1_PIN) == HIGH) {
     buttons += 2;
   }
-  if (digitalRead(NOTE_2_PIN) == LOW) {
+  if (digitalRead(NOTE_2_PIN) == HIGH) {
     buttons += 4;
   }
-  if (digitalRead(NOTE_3_PIN) == LOW) {
+  if (digitalRead(NOTE_3_PIN) == HIGH) {
     buttons += 8;
   }
   return buttons + scaleOffset + getOctave();
@@ -132,6 +132,11 @@ void sendNote(byte channel, byte note, byte velocity) {
   Serial1.write(playNote + channel);
   Serial1.write(note);
   Serial1.write(velocity);
+  Serial.print("note");
+  Serial.print("\t");
+  Serial.print(note);
+  Serial.print("\t");
+  Serial.println(velocity);
 }
 
 void sendPitchBend(byte channel, int sensorOutput) {
@@ -149,8 +154,7 @@ pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0);
 void setup() {
   Serial.begin(9600);
   Serial1.begin(31250);
-  while (!Serial1) ;
-
+  analogReference(DEFAULT);
   pinMode(NOTE_0_PIN, INPUT_PULLUP);
   pinMode(NOTE_1_PIN, INPUT_PULLUP);
   pinMode(NOTE_2_PIN, INPUT_PULLUP);
@@ -161,19 +165,18 @@ void setup() {
   newNote = notes[0];
   oldNote = notes[0];
   channel = 0;
-  t_last = millis();
 }
 
 void loop() {
   now = millis();
   int pressure = analogRead(PRESSURE_PIN);
   if(volume.update(pressure)){
-    volume.send();
+    volume.send(channel);
   }
   /*if(detune.update(pressure)){
     detune.send();
   }*/
-
+  
   newNote = readNote();
   if (newNote != oldNote) {
     sendNote(channel, notes[oldNote], 0);
