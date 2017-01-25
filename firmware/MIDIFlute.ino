@@ -5,6 +5,9 @@
 #define NOTE_1_PIN 3
 #define NOTE_2_PIN 2
 #define NOTE_3_PIN 0
+#define SLIDER_0_PIN A11
+#define SLIDER_1_PIN A5
+#define JOYSTICK_X_PIN A2
 
 // defining constants for MIDI commands (First transmitted byte)
 const byte playNote = 0x90;   // Note on
@@ -48,6 +51,17 @@ void sendCC(byte channel, byte controller, byte value) {
 }
 
 class pressureControlledMIDI{
+  /* This object reads analog values from the pressure sensor and maps them
+   *  to a member of the values array.
+   *  parameters for the cotr are:
+   *  threshold: A minimal pressure reading that has to be exceeded to trigger
+   *  CC_target: The continous controller that is to be affected. 
+   *             Channel volume or expression are typical values
+   *  values[]:  The array of output values
+   *  nValues:   The length of the value array
+   *  noiseTolerance: The minimal change in output that is required to send a new message
+   *                  reduces the number of messages sent but might introduce latency
+   */
   private:
   int _oldValue = 0, _newValue = 0;
   int _noiseTolerance;
@@ -57,7 +71,11 @@ class pressureControlledMIDI{
   int _threshold, _upperLimit;
 
   public:
-  pressureControlledMIDI(int threshold, byte CC_target, byte values[], int nValues, int noiseTolerance){
+  pressureControlledMIDI(int threshold,\
+                         byte CC_target,\
+                         byte values[],\
+                         int nValues,\
+                         int noiseTolerance){
     _noiseTolerance = noiseTolerance;
     _CC_target = CC_target;
     _values = values;
@@ -65,24 +83,25 @@ class pressureControlledMIDI{
     _threshold = threshold;
   }
   
-  bool update(int pressure){
+  void update(int pressure, byte channel){
     int pressureIndex = constrain(pressure - _threshold, 0, _nValues - 1);
     _newValue = _values[pressureIndex];
     signed char delta = abs(_oldValue - _newValue);
     
     if(delta > _noiseTolerance){
+      sendCC(channel, _CC_target, _newValue);
       _oldValue = _newValue;
-      return true;
-    }else{
-      return false;
     }
   }
-  void send(byte channel){
-    sendCC(channel, _CC_target, _newValue);
-  }  
 };
 
 class Slider{
+  /* This object allows to map slider input to a continous controller
+   *  parameters of ctor:
+   *  pin: The input pin to which the slider is connected
+   *  CC_target: The CC that is being affected
+   *  invert: set true for reversing the direction of a slider. Default is 'false'
+   */
   private:
     int _pin, oldValue, newValue;
     byte _channel;
@@ -93,9 +112,11 @@ class Slider{
       _pin = pin;
       _CC_target = CC_target;
       _invert = invert;
+      pinMode(pin, INPUT);
     }
     void update(byte channel){
       newValue = analogRead(_pin);
+      
       if (newValue != oldValue){
         if(_invert){
           sendCC(channel, _CC_target, map(newValue, 0, 1023, 127, 0));
@@ -159,6 +180,9 @@ byte channel,
      
 pressureControlledMIDI volume(pMin, cc_volume, pressureCurve, lPressureCurve, 2);
 pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0);
+//Slider leftSlider(SLIDER_0_PIN, 1);
+//Slider rightSlider(SLIDER_1_PIN, 16);
+Slider joyX(JOYSTICK_X_PIN, 1);
 
 void setup() {
   Serial.begin(9600);
@@ -178,12 +202,11 @@ void setup() {
 
 void loop() {
   int pressure = analogRead(PRESSURE_PIN);
-  if(volume.update(pressure)){
-    volume.send(channel);
-  }
-  /*if(detune.update(pressure)){
-    detune.send();
-  }*/
+  volume.update(pressure, channel);
+  detune.update(pressure, channel);
+  //leftSlider.update(channel);
+  //rightSlider.update(channel);
+  joyX.update(channel);
   
   newNote = readNote(baseOctave);
   if (newNote != oldNote) {
