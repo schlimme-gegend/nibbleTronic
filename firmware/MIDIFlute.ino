@@ -34,6 +34,7 @@ const signed char notes[] = {0, 1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13
 const byte scaleOffset = 28; // we start at the second octave
 const byte octaves[] = {0, 14, 28, 42, 56, 70, 84, 98, 112}; // nine octaves
 const byte octaveRange = 4; // This is the number of octaves that make up the range of the octave  slider
+const byte baseOctave = 2;  // The lowest selectable octave
 
 void sendCC(byte channel, byte controller, byte value) {
   Serial1.write(cc + channel);
@@ -106,15 +107,15 @@ class Slider{
     }
 };
 
-byte channel,
-     channelSelect,
-     modeSelect,
-     newNote,
-     oldNote,
-     oldCOne, newCOne,
-     oldCTwo, newCTwo, octaveOffset;
 
-int readNote() {
+byte getOctave(byte start = 0) {
+  byte end = start + octaveRange - 1;
+  int sliderValue = analogRead(OCTAVE_PIN);
+  byte octaveIndex = map(sliderValue, 0, 1023, start, end);
+  return octaves[octaveIndex];
+}
+
+byte readNote(byte startOctave) {
   byte buttons = 0;
   if (digitalRead(NOTE_0_PIN) == HIGH) {
     buttons += 1;
@@ -128,18 +129,8 @@ int readNote() {
   if (digitalRead(NOTE_3_PIN) == HIGH) {
     buttons += 8;
   }
-  return buttons + scaleOffset + getOctave();
-}
-
-byte getOctave() {
-  octaveOffset = 0;
-  int sliderValue = analogRead(OCTAVE_PIN);
-  byte octaveIndex = map(sliderValue, 0, 1023, 0, octaveRange);
-  return octaves[octaveIndex];
-}
-
-int getNote(int buttonState) {
-  return notes[buttonState + scaleOffset + getOctave()];
+  int index = buttons + scaleOffset + getOctave(startOctave);
+  return notes[index];
 }
 
 void sendNote(byte channel, byte note, byte velocity) {
@@ -162,6 +153,10 @@ void sendPitchBend(byte channel, int sensorOutput) {
   Serial1.write(msb);
 }
 
+byte channel,
+     newNote,
+     oldNote;
+     
 pressureControlledMIDI volume(pMin, cc_volume, pressureCurve, lPressureCurve, 2);
 pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0);
 
@@ -190,7 +185,7 @@ void loop() {
     detune.send();
   }*/
   
-  newNote = readNote();
+  newNote = readNote(baseOctave);
   if (newNote != oldNote) {
     sendNote(channel, notes[oldNote], 0);
     sendNote(channel, notes[newNote], midiMax);
