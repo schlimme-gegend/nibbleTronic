@@ -8,6 +8,7 @@
 #define SLIDER_0_PIN A11
 #define SLIDER_1_PIN A5
 #define JOYSTICK_X_PIN A2
+#define JOYSTICK_Y_PIN A3
 
 // defining constants for MIDI commands (First transmitted byte)
 const byte playNote = 0x90;   // Note on
@@ -89,8 +90,8 @@ class pressureControlledMIDI{
     signed char delta = abs(_oldValue - _newValue);
     
     if(delta > _noiseTolerance){
-      sendCC(channel, _CC_target, _newValue);
       _oldValue = _newValue;
+      sendCC(channel, _CC_target, _newValue);
     }
   }
 };
@@ -183,6 +184,7 @@ pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0);
 //Slider leftSlider(SLIDER_0_PIN, 1);
 //Slider rightSlider(SLIDER_1_PIN, 16);
 Slider joyX(JOYSTICK_X_PIN, 1);
+Slider joyY(JOYSTICK_Y_PIN, 2);
 
 void setup() {
   Serial.begin(9600);
@@ -207,6 +209,7 @@ void loop() {
   //leftSlider.update(channel);
   //rightSlider.update(channel);
   joyX.update(channel);
+  joyY.update(channel);
   
   newNote = readNote(baseOctave);
   if (newNote != oldNote) {
