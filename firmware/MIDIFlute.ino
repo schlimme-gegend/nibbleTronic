@@ -35,13 +35,6 @@ const byte scaleOffset = 28; // we start at the second octave
 const byte octaves[] = {0, 14, 28, 42, 56, 70, 84, 98, 112}; // nine octaves
 const byte octaveRange = 4; // This is the number of octaves that make up the range of the octave  slider
 
-int sensorValue = 0;
-int t_wait = 39;
-int delta_t;
-int requiredDeltaP = 3;
-
-unsigned long t_last, now;
-
 void sendCC(byte channel, byte controller, byte value) {
   Serial1.write(cc + channel);
   Serial1.write(controller);
@@ -88,6 +81,31 @@ class pressureControlledMIDI{
   }  
 };
 
+class Slider{
+  private:
+    int _pin, oldValue, newValue;
+    byte _channel;
+    byte _CC_target;
+    bool _invert;
+  public:
+    Slider(int pin, byte CC_target, bool invert = false){
+      _pin = pin;
+      _CC_target = CC_target;
+      _invert = invert;
+    }
+    void update(byte channel){
+      newValue = analogRead(_pin);
+      if (newValue != oldValue){
+        if(_invert){
+          sendCC(channel, _CC_target, map(newValue, 0, 1023, 127, 0));
+        }else{
+          sendCC(channel, _CC_target, map(newValue, 0, 1023, 0, 127));
+        }
+        oldValue = newValue;
+      }
+    }
+};
+
 byte channel,
      channelSelect,
      modeSelect,
@@ -122,10 +140,6 @@ byte getOctave() {
 
 int getNote(int buttonState) {
   return notes[buttonState + scaleOffset + getOctave()];
-}
-
-byte readController(int pin) {
-  return map(analogRead(pin), 0, 1023, 0, 127);
 }
 
 void sendNote(byte channel, byte note, byte velocity) {
@@ -168,7 +182,6 @@ void setup() {
 }
 
 void loop() {
-  now = millis();
   int pressure = analogRead(PRESSURE_PIN);
   if(volume.update(pressure)){
     volume.send(channel);
