@@ -110,7 +110,6 @@ class Slider{
     byte _channel;
     byte _CC_target;
     bool _invert;
-    byte sliderdelta;
   public:
     Slider(int pin, byte CC_target, bool invert = false){
       _pin = pin;
