@@ -39,7 +39,8 @@ const byte scaleOffset = 28; // we start at the second octave
 const byte octaves[] = {0, 14, 28, 42, 56, 70, 84, 98, 112}; // nine octaves
 const byte octaveRange = 4; // This is the number of octaves that make up the range of the octave  slider
 const byte baseOctave = 2;  // The lowest selectable octave
-const byte Slidertolerance = 3;         // The tolerance before Sliders sends Values (without this youstick sensor flood output)
+
+const byte slidertolerance = 3;       // Noise Reduction for sliders to prevent joystick noise in center position
 
 void sendCC(byte channel, byte controller, byte value) {
   Serial1.write(cc + channel);
@@ -109,6 +110,7 @@ class Slider{
     byte _channel;
     byte _CC_target;
     bool _invert;
+    byte sliderdelta;
   public:
     Slider(int pin, byte CC_target, bool invert = false){
       _pin = pin;
@@ -118,10 +120,9 @@ class Slider{
     }
     void update(byte channel){
       newValue = analogRead(_pin);
-      
-      signed char sliderdelta = abs(oldValue - newValue);
-  if(sliderdelta > Slidertolerance){
-       if (newValue != oldValue){
+      if (newValue != oldValue){
+        signed char sliderdelta = abs(oldValue - newValue);
+        if(sliderdelta > slidertolerance){
         if(_invert){
           sendCC(channel, _CC_target, map(newValue, 0, 1023, 127, 0));
         }else{
@@ -137,7 +138,7 @@ class Slider{
 byte getOctave(byte start = 0) {
   byte end = start + octaveRange - 1;
   int sliderValue = analogRead(OCTAVE_PIN);
-  byte octaveIndex = map(sliderValue, 0, 1023, start, end);
+  byte octaveIndex = map(sliderValue, 0, 1000, start, end);
   return octaves[octaveIndex];
 }
 
