@@ -286,7 +286,7 @@ void loop() {
   int pressure = analogRead(PRESSURE_PIN);
   
   pressureControlledMIDI volume(pMin, epromvalueVolumeCC, pressureCurve, lPressureCurve, 2);
-  pressureControlledMIDI detune(pMin, epromvalueDetuneCC, detunes, lPressureCurve, 0);
+  pressureControlledMIDI detune(pMin, epromvalueDetuneCC, detunes, lPressureCurve, 64);
   
   volume.update(pressure, channel);
   detune.update(pressure, channel);
