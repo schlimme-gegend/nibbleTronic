@@ -1,0 +1,25 @@
+#define JOYSTICK_X_PIN A2
+#define JOYSTICK_Y_PIN A3
+#define SLIDER_0_PIN A11
+#define SLIDER_1_PIN A5
+
+int joyxval = 0;
+int joyyval = 0;
+
+
+void setup() {
+  Serial.begin(9600);  
+
+}
+
+void loop() {
+  joyxval = map(analogRead(JOYSTICK_X_PIN), 0, 1023, 0, 255);
+  joyyval = map(analogRead(JOYSTICK_Y_PIN), 0, 1023, 0, 255);
+  Serial.print("joyx = ");
+  Serial.print("\t");
+  Serial.print(joyxval);  
+  Serial.print("\t");
+  Serial.print("joyy = ");
+  Serial.println(joyyval); 
+  
+}
