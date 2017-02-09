@@ -1,44 +1,105 @@
-#define clkPin 2
-#define dtPin 3
-#define swPin 4 //the number of the button
-int encoderVal = 0;
-void setup()
-{
-pinMode(clkPin, INPUT);
-pinMode(dtPin, INPUT);
-pinMode(swPin, INPUT);
-digitalWrite(swPin, HIGH);
-Serial.begin(9600);
+const int buttonPin = 11;    // the number of the pushbutton pin
+const int ledPin = 13;      // the number of the LED pin
+
+// Variables will change:
+int ledState = HIGH;         // the current state of the output pin
+int buttonState;             // the current reading from the input pin
+
+#define encoder0PinA  2
+#define encoder0PinB  4
+
+volatile unsigned int encoder0Pos = 0;
+
+void setup() { 
+
+
+  pinMode(encoder0PinA, INPUT); 
+  digitalWrite(encoder0PinA, HIGH);       // turn on pull-up resistor
+  pinMode(encoder0PinB, INPUT); 
+  digitalWrite(encoder0PinB, HIGH);       // turn on pull-up resistor
+
+  attachInterrupt(0, doEncoder, CHANGE);  // encoder pin on interrupt 0 - pin 2
+  Serial.begin (9600);
+  Serial.println("start");                // a personal quirk
+
+  pinMode(buttonPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+
+  // set initial LED state
+  digitalWrite(ledPin, ledState);
+  
+} 
+
+void loop(){
+// read the state of the pushbutton value:
+  buttonState =! digitalRead(buttonPin);
+
+  // check if the pushbutton is pressed.
+  // if it is, the buttonState is HIGH:
+  if (buttonState == HIGH) {
+    // turn LED on:
+    digitalWrite(ledPin, HIGH);
+  } else {
+    // turn LED off:
+    digitalWrite(ledPin, LOW);
+  }
 }
-void loop()
-{
-int change = getEncoderTurn();
-encoderVal = encoderVal + change;
-if(digitalRead(swPin) == LOW)
-{
-encoderVal = 0;
+
+void doEncoder() {
+  /* If pinA and pinB are both high or both low, it is spinning
+   * forward. If they're different, it's going backward.
+   *
+   * For more information on speeding up this process, see
+   * [Reference/PortManipulation], specifically the PIND register.
+   */
+  if (digitalRead(encoder0PinA) == digitalRead(encoder0PinB)) {
+    encoder0Pos++;
+  } else {
+    encoder0Pos--;
+  }
+
+  Serial.println (encoder0Pos, DEC);
 }
-Serial.println(encoderVal);
+
+/* See this expanded function to get a better understanding of the
+ * meanings of the four possible (pinA, pinB) value pairs:
+ */
+void doEncoder_Expanded(){
+  if (digitalRead(encoder0PinA) == HIGH) {   // found a low-to-high on channel A
+    if (digitalRead(encoder0PinB) == LOW) {  // check channel B to see which way
+                                             // encoder is turning
+      encoder0Pos = encoder0Pos - 1;         // CCW
+    } 
+    else {
+      encoder0Pos = encoder0Pos + 1;         // CW
+    }
+  }
+  else                                        // found a high-to-low on channel A
+  { 
+    if (digitalRead(encoder0PinB) == LOW) {   // check channel B to see which way
+                                              // encoder is turning  
+      encoder0Pos = encoder0Pos + 1;          // CW
+    } 
+    else {
+      encoder0Pos = encoder0Pos - 1;          // CCW
+    }
+
+  }
+  Serial.println (encoder0Pos, DEC);          // debug - remember to comment out
+                                              // before final program run
+  // you don't want serial slowing down your program if not needed
 }
-int getEncoderTurn(void)
-{
-static int oldA = HIGH;
-static int oldB = HIGH;
-int result = 0;
-int newA = digitalRead(clkPin);
-int newB = digitalRead(dtPin);
-if (newA != oldA || newB != oldB)
-{
-// something has changed
-if (oldA == HIGH && newA == LOW)
-{
-result = (oldB * 2 - 1);
-}
-}
-oldA = newA;
-oldB = newB;
-return result;
-}
+
+/*  to read the other two transitions - just use another attachInterrupt()
+in the setup and duplicate the doEncoder function into say, 
+doEncoderA and doEncoderB. 
+You also need to move the other encoder wire over to pin 3 (interrupt 1). 
+*/ 
+
+
+
+
+
 -------------------
 -------------------
 
@@ -234,38 +295,5 @@ void loop() {
 
   delay(500);
 }
--_----------
 ------------
-const int buttonPin = 9;    // the number of the pushbutton pin
-const int ledPin = 13;      // the number of the LED pin
-
-// Variables will change:
-int ledState = HIGH;         // the current state of the output pin
-int buttonState;             // the current reading from the input pin
-
-
-void setup() {
-  pinMode(buttonPin, INPUT);
-  pinMode(ledPin, OUTPUT);
-
-  // set initial LED state
-  digitalWrite(ledPin, ledState);
-  
-}
-
-void loop() {
- // read the state of the pushbutton value:
-  buttonState = digitalRead(buttonPin);
-
-  // check if the pushbutton is pressed.
-  // if it is, the buttonState is HIGH:
-  if (buttonState == HIGH) {
-    // turn LED on:
-    digitalWrite(ledPin, HIGH);
-  } else {
-    // turn LED off:
-    digitalWrite(ledPin, LOW);
-  }
-}
-  
-
+------------
