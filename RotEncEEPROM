@@ -1,0 +1,304 @@
+#define clkPin 2
+#define dtPin 3
+#define swPin 4 //the number of the button
+int encoderVal = 0;
+void setup()
+{
+pinMode(clkPin, INPUT);
+pinMode(dtPin, INPUT);
+pinMode(swPin, INPUT);
+digitalWrite(swPin, HIGH);
+Serial.begin(9600);
+}
+void loop()
+{
+int change = getEncoderTurn();
+encoderVal = encoderVal + change;
+if(digitalRead(swPin) == LOW)
+{
+encoderVal = 0;
+}
+Serial.println(encoderVal);
+}
+int getEncoderTurn(void)
+{
+static int oldA = HIGH;
+static int oldB = HIGH;
+int result = 0;
+int newA = digitalRead(clkPin);
+int newB = digitalRead(dtPin);
+if (newA != oldA || newB != oldB)
+{
+// something has changed
+if (oldA == HIGH && newA == LOW)
+{
+result = (oldB * 2 - 1);
+}
+}
+oldA = newA;
+oldB = newB;
+return result;
+}
+-------------------
+-------------------
+
+/*
+ * EEPROM Write
+ *
+ * Stores values read from analog input 0 into the EEPROM.
+ * These values will stay in the EEPROM when the board is
+ * turned off and may be retrieved later by another sketch.
+ */
+
+#include <EEPROM.h>
+
+/** the current address in the EEPROM (i.e. which byte we're going to write to next) **/
+int addr = 0;
+
+void setup() {
+  /** Empty setup. **/
+}
+
+void loop() {
+  /***
+    Need to divide by 4 because analog inputs range from
+    0 to 1023 and each byte of the EEPROM can only hold a
+    value from 0 to 255.
+  ***/
+
+  int val = analogRead(0) / 4;
+
+  /***
+    Write the value to the appropriate byte of the EEPROM.
+    these values will remain there when the board is
+    turned off.
+  ***/
+
+  EEPROM.write(addr, val);
+
+  /***
+    Advance to the next address, when at the end restart at the beginning.
+
+    Larger AVR processors have larger EEPROM sizes, E.g:
+    - Arduno Duemilanove: 512b EEPROM storage.
+    - Arduino Uno:        1kb EEPROM storage.
+    - Arduino Mega:       4kb EEPROM storage.
+
+    Rather than hard-coding the length, you should use the pre-provided length function.
+    This will make your code portable to all AVR processors.
+  ***/
+  addr = addr + 1;
+  if (addr == EEPROM.length()) {
+    addr = 0;
+  }
+
+  /***
+    As the EEPROM sizes are powers of two, wrapping (preventing overflow) of an
+    EEPROM address is also doable by a bitwise and of the length - 1.
+
+    ++addr &= EEPROM.length() - 1;
+  ***/
+
+
+  delay(100);
+}
+----------------
+----------------
+/***
+   EEPROM Update method
+
+   Stores values read from analog input 0 into the EEPROM.
+   These values will stay in the EEPROM when the board is
+   turned off and may be retrieved later by another sketch.
+
+   If a value has not changed in the EEPROM, it is not overwritten
+   which would reduce the life span of the EEPROM unnecessarily.
+
+   Released using MIT licence.
+ ***/
+
+#include <EEPROM.h>
+
+/** the current address in the EEPROM (i.e. which byte we're going to write to next) **/
+int address = 0;
+
+void setup() {
+  /** EMpty setup **/
+}
+
+void loop() {
+  /***
+    need to divide by 4 because analog inputs range from
+    0 to 1023 and each byte of the EEPROM can only hold a
+    value from 0 to 255.
+  ***/
+  int val = analogRead(0) / 4;
+
+  /***
+    Update the particular EEPROM cell.
+    these values will remain there when the board is
+    turned off.
+  ***/
+  EEPROM.update(address, val);
+
+  /***
+    The function EEPROM.update(address, val) is equivalent to the following:
+
+    if( EEPROM.read(address) != val ){
+      EEPROM.write(address, val);
+    }
+  ***/
+
+
+  /***
+    Advance to the next address, when at the end restart at the beginning.
+
+    Larger AVR processors have larger EEPROM sizes, E.g:
+    - Arduno Duemilanove: 512b EEPROM storage.
+    - Arduino Uno:        1kb EEPROM storage.
+    - Arduino Mega:       4kb EEPROM storage.
+
+    Rather than hard-coding the length, you should use the pre-provided length function.
+    This will make your code portable to all AVR processors.
+  ***/
+  address = address + 1;
+  if (address == EEPROM.length()) {
+    address = 0;
+  }
+
+  /***
+    As the EEPROM sizes are powers of two, wrapping (preventing overflow) of an
+    EEPROM address is also doable by a bitwise and of the length - 1.
+
+    ++address &= EEPROM.length() - 1;
+  ***/
+
+  delay(100);
+}
+------------------
+------------------
+
+/*
+ * EEPROM Read
+ *
+ * Reads the value of each byte of the EEPROM and prints it
+ * to the computer.
+ * This example code is in the public domain.
+ */
+
+#include <EEPROM.h>
+
+// start reading from the first byte (address 0) of the EEPROM
+int address = 0;
+byte value;
+
+void setup() {
+  // initialize serial and wait for port to open:
+  Serial.begin(9600);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+}
+
+void loop() {
+  // read a byte from the current address of the EEPROM
+  value = EEPROM.read(address);
+
+  Serial.print(address);
+  Serial.print("\t");
+  Serial.print(value, DEC);
+  Serial.println();
+
+  /***
+    Advance to the next address, when at the end restart at the beginning.
+
+    Larger AVR processors have larger EEPROM sizes, E.g:
+    - Arduno Duemilanove: 512b EEPROM storage.
+    - Arduino Uno:        1kb EEPROM storage.
+    - Arduino Mega:       4kb EEPROM storage.
+
+    Rather than hard-coding the length, you should use the pre-provided length function.
+    This will make your code portable to all AVR processors.
+  ***/
+  address = address + 1;
+  if (address == EEPROM.length()) {
+    address = 0;
+  }
+
+  /***
+    As the EEPROM sizes are powers of two, wrapping (preventing overflow) of an
+    EEPROM address is also doable by a bitwise and of the length - 1.
+
+    ++address &= EEPROM.length() - 1;
+  ***/
+
+  delay(500);
+}
+-_----------
+------------
+
+
+ This example code is in the public domain.
+
+ http://www.arduino.cc/en/Tutorial/Debounce
+ */
+
+// constants won't change. They're used here to
+// set pin numbers:
+const int buttonPin = 2;    // the number of the pushbutton pin
+const int ledPin = 13;      // the number of the LED pin
+
+// Variables will change:
+int ledState = HIGH;         // the current state of the output pin
+int buttonState;             // the current reading from the input pin
+int lastButtonState = LOW;   // the previous reading from the input pin
+
+// the following variables are unsigned long's because the time, measured in miliseconds,
+// will quickly become a bigger number than can be stored in an int.
+unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
+unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
+
+void setup() {
+  pinMode(buttonPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+
+  // set initial LED state
+  digitalWrite(ledPin, ledState);
+}
+
+void loop() {
+  // read the state of the switch into a local variable:
+  int reading = digitalRead(buttonPin);
+
+  // check to see if you just pressed the button
+  // (i.e. the input went from LOW to HIGH),  and you've waited
+  // long enough since the last press to ignore any noise:
+
+  // If the switch changed, due to noise or pressing:
+  if (reading != lastButtonState) {
+    // reset the debouncing timer
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    // whatever the reading is at, it's been there for longer
+    // than the debounce delay, so take it as the actual current state:
+
+    // if the button state has changed:
+    if (reading != buttonState) {
+      buttonState = reading;
+
+      // only toggle the LED if the new button state is HIGH
+      if (buttonState == HIGH) {
+        ledState = !ledState;
+      }
+    }
+  }
+
+  // set the LED:
+  digitalWrite(ledPin, ledState);
+
+  // save the reading.  Next time through the loop,
+  // it'll be the lastButtonState:
+  lastButtonState = reading;
+}
