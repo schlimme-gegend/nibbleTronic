@@ -1,23 +1,50 @@
+
+#include <EEPROM.h>
+
 // defining pin assignments as macros to save precious RAM for variables
 #define PRESSURE_PIN A0
 #define OCTAVE_PIN A1
-#define NOTE_0_PIN 4
-#define NOTE_1_PIN 3
-#define NOTE_2_PIN 2
-#define NOTE_3_PIN 0
 #define SLIDER_0_PIN A11
 #define SLIDER_1_PIN A5
 #define JOYSTICK_X_PIN A2
 #define JOYSTICK_Y_PIN A3
+#define MIDILEARNMODE_PIN 11
+#define LEARNMIDI_PIN 12
+
+// Rotary ENCODER - NEEDS TO BE ON PIN 2 & 3 IN BOARD VERSION II
+#define encoderPinA
+#define encoderPinB
+
+//NOTE SWITCHES - NEEDS TO BE ON PIN 0, 10, 11 & 12 IN BOARD VERSION II
+#define NOTE_0_PIN 4
+#define NOTE_1_PIN 3
+#define NOTE_2_PIN 2
+#define NOTE_3_PIN 0
+
+// the current address in the EEPROM (i.e. which byte we're going to write)
+#define addressjoyX 0
+#define addressjoyY 2
+#define adressSliderL 4
+#define adressSliderR 6
+#define adressVolume 8
+#define adressDetune 10
+#define adressExpression 12
+
+// Variables for assignng CC values from EPROM and write into in MIDI learn mode
+byte epromvalueJoyXCC;
+byte epromvalueJoyYCC;
+byte epromvalueSliderLCC;
+byte epromvalueSliderRCC;
+byte epromvalueVolumeCC;
+byte epromvalueDetuneCC;
+byte epromvalueExpressionCC;
+
 
 // defining constants for MIDI commands (First transmitted byte)
 const byte playNote = 0x90;   // Note on
 const byte pitchBend = 0x70;  // Pitch bend
 const byte cc = 0xB0;         // Continous Controller
 // ...for MIDI parameters (Second and third transmitted byte)
-const byte cc_volume = 0x07;  // Selects channel volume (coarse) as CC target
-const byte cc_expr = 0xB;     // Selects Expression as CC target This is interpreted as volume by the Volca Bass
-const byte cc_detune = 0x2D;
 const byte midiMax = 0x7F;    // The highest possible parameter value (127 or 0b1111111)
 const byte midiMin = 0;       // A zero, just giving it a fancy name here
 
@@ -183,12 +210,9 @@ byte channel,
      newNote,
      oldNote;
      
-pressureControlledMIDI volume(pMin, cc_volume, pressureCurve, lPressureCurve, 2);
-pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0);
-//Slider leftSlider(SLIDER_0_PIN, 1);
-//Slider rightSlider(SLIDER_1_PIN, 16);
-Slider joyX(JOYSTICK_X_PIN, 1);
-Slider joyY(JOYSTICK_Y_PIN, 2);
+
+
+
 
 void setup() {
   Serial.begin(9600);
@@ -204,14 +228,61 @@ void setup() {
   newNote = notes[0];
   oldNote = notes[0];
   channel = 0;
+
+  // WRITING CC VALUES TO EEPROM - WORKARROUND FOR TESTING - WILL BE DONE BY MIDI LEARN LATER
+  delay(3000);
+  EEPROM.write(addressjoyX, 1);
+  delay(100);
+  EEPROM.write(addressjoyY, 2);
+  delay(100);
+  EEPROM.write(adressSliderL, 4);
+  delay(100);
+  EEPROM.write(adressSliderR, 16);
+  delay(100);
+  EEPROM.write(adressVolume, 0x07);
+  delay(100);
+  EEPROM.write(adressDetune, 0x2D);
+  delay(100);
+  EEPROM.write(adressExpression, 0xB);
+  delay(1000);
+
+
+  // READING CC VALUES FROM EEPROM
+  epromvalueJoyXCC = EEPROM.read(addressjoyX);
+  epromvalueJoyYCC = EEPROM.read(addressjoyY);
+  epromvalueSliderLCC = EEPROM.read(adressSliderL);
+  epromvalueSliderRCC = EEPROM.read(adressSliderR);
+  epromvalueVolumeCC = EEPROM.read(adressVolume);
+  epromvalueDetuneCC = EEPROM.read(adressDetune);
+  epromvalueExpressionCC = EEPROM.read(adressExpression);
+
+  Serial.println("CC INITIALISATION");
+  Serial.print("JoyXCC");
+  Serial.print("\t");
+  Serial.println(epromvalueJoyXCC);
+  Serial.print("JoyyCC");
+  Serial.print("\t");
+  Serial.println(epromvalueJoyYCC);
+  delay(1000);
+
+  
 }
 
 void loop() {
   int pressure = analogRead(PRESSURE_PIN);
+  
+  pressureControlledMIDI volume(pMin, epromvalueVolumeCC, pressureCurve, lPressureCurve, 2);
+  pressureControlledMIDI detune(pMin, epromvalueDetuneCC, detunes, lPressureCurve, 0);
   volume.update(pressure, channel);
   detune.update(pressure, channel);
+  
+  //Slider leftSlider(SLIDER_0_PIN, epromvalueSliderLCC);
+  //Slider rightSlider(SLIDER_1_PIN, epromvalueSliderRCC);
   //leftSlider.update(channel);
   //rightSlider.update(channel);
+  
+  Slider joyX(JOYSTICK_X_PIN, epromvalueJoyXCC);
+  Slider joyY(JOYSTICK_Y_PIN, epromvalueJoyYCC);
   joyX.update(channel);
   joyY.update(channel);
   
@@ -222,4 +293,3 @@ void loop() {
     oldNote = newNote;
   }
 }
-
