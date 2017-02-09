@@ -23,12 +23,12 @@
 
 // the current address in the EEPROM (i.e. which byte we're going to write)
 #define addressjoyX 0
-#define addressjoyY 2
-#define adressSliderL 4
-#define adressSliderR 6
-#define adressVolume 8
-#define adressDetune 10
-#define adressExpression 12
+#define addressjoyY 1
+#define adressSliderL 2
+#define adressSliderR 3
+#define adressVolume 4
+#define adressDetune 5
+#define adressExpression 6
 
 // Variables for assignng CC values from EPROM and write into in MIDI learn mode
 byte epromvalueJoyXCC;
@@ -230,7 +230,6 @@ void setup() {
   channel = 0;
 
   // WRITING CC VALUES TO EEPROM - WORKARROUND FOR TESTING - WILL BE DONE BY MIDI LEARN LATER
-  delay(3000);
   EEPROM.write(addressjoyX, 1);
   delay(100);
   EEPROM.write(addressjoyY, 2);
@@ -244,7 +243,7 @@ void setup() {
   EEPROM.write(adressDetune, 0x2D);
   delay(100);
   EEPROM.write(adressExpression, 0xB);
-  delay(1000);
+  delay(100);
 
 
   // READING CC VALUES FROM EEPROM
@@ -257,13 +256,28 @@ void setup() {
   epromvalueExpressionCC = EEPROM.read(adressExpression);
 
   Serial.println("CC INITIALISATION");
-  Serial.print("JoyXCC");
+  Serial.print("JoyX CC");
   Serial.print("\t");
   Serial.println(epromvalueJoyXCC);
-  Serial.print("JoyyCC");
+  Serial.print("JoyY CC");
   Serial.print("\t");
   Serial.println(epromvalueJoyYCC);
-  delay(1000);
+  Serial.print("SilderL CC");
+  Serial.print("\t");
+  Serial.println(epromvalueSliderLCC);
+  Serial.print("SliderR CC");
+  Serial.print("\t");
+  Serial.println(epromvalueSliderRCC);
+  Serial.print("Volume CC");
+  Serial.print("\t");
+  Serial.println(epromvalueVolumeCC);
+  Serial.print("Detune CC");
+  Serial.print("\t");
+  Serial.println(epromvalueDetuneCC);
+  Serial.print("Expression CC");
+  Serial.print("\t");
+  Serial.println(epromvalueExpressionCC);
+  delay(5000);
 
   
 }
@@ -273,6 +287,7 @@ void loop() {
   
   pressureControlledMIDI volume(pMin, epromvalueVolumeCC, pressureCurve, lPressureCurve, 2);
   pressureControlledMIDI detune(pMin, epromvalueDetuneCC, detunes, lPressureCurve, 0);
+  
   volume.update(pressure, channel);
   detune.update(pressure, channel);
   
