@@ -14,7 +14,7 @@
 #define encoder0PinA 11
 #define encoder0PinB 12
 //#define MIDILEARNMODE_PIN 10
-#define LEARNMIDI_PIN 12
+#define LEARNMIDI_PIN 10
 
 //NOTE SWITCHES
 #define NOTE_0_PIN 4
