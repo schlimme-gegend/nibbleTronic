@@ -1,4 +1,4 @@
-
+ 
 #include <EEPROM.h>
 
 // defining pin assignments as macros to save precious RAM for variables
@@ -8,14 +8,15 @@
 #define SLIDER_1_PIN A5
 #define JOYSTICK_X_PIN A2
 #define JOYSTICK_Y_PIN A3
-#define MIDILEARNMODE_PIN 11
+
+
+// Rotary ENCODER
+#define encoder0PinA 11
+#define encoder0PinB 12
+//#define MIDILEARNMODE_PIN 10
 #define LEARNMIDI_PIN 12
 
-// Rotary ENCODER - NEEDS TO BE ON PIN 2 & 3 IN BOARD VERSION II
-#define encoderPinA
-#define encoderPinB
-
-//NOTE SWITCHES - NEEDS TO BE ON PIN 0, 10, 11 & 12 IN BOARD VERSION II
+//NOTE SWITCHES
 #define NOTE_0_PIN 4
 #define NOTE_1_PIN 3
 #define NOTE_2_PIN 2
@@ -29,6 +30,7 @@
 #define adressVolume 4
 #define adressDetune 5
 #define adressExpression 6
+#define adressEncoder 6
 
 // Variables for assignng CC values from EPROM and write into in MIDI learn mode
 byte epromvalueJoyXCC;
@@ -38,8 +40,13 @@ byte epromvalueSliderRCC;
 byte epromvalueVolumeCC;
 byte epromvalueDetuneCC;
 byte epromvalueExpressionCC;
+byte epromvalueEncoderCC;
 
-
+//Variables for ENCODER
+ byte encoder0Pos = 1;
+ byte encoder0PinALast = LOW;
+ byte encoderN = LOW;
+ 
 // defining constants for MIDI commands (First transmitted byte)
 const byte playNote = 0x90;   // Note on
 const byte pitchBend = 0x70;  // Pitch bend
@@ -224,15 +231,17 @@ void setup() {
   pinMode(NOTE_3_PIN, INPUT_PULLUP);
   pinMode(OCTAVE_PIN, INPUT);
   pinMode(PRESSURE_PIN, INPUT);
+  pinMode (encoder0PinA,INPUT);
+  pinMode (encoder0PinB,INPUT);
 
   newNote = notes[0];
   oldNote = notes[0];
   channel = 0;
 
   // WRITING CC VALUES TO EEPROM - WORKARROUND FOR TESTING - WILL BE DONE BY MIDI LEARN LATER
-  EEPROM.write(addressjoyX, 1);
+  EEPROM.write(addressjoyX, 21);
   delay(100);
-  EEPROM.write(addressjoyY, 2);
+  EEPROM.write(addressjoyY, 22);
   delay(100);
   EEPROM.write(adressSliderL, 4);
   delay(100);
@@ -244,6 +253,8 @@ void setup() {
   delay(100);
   EEPROM.write(adressExpression, 0xB);
   delay(100);
+  EEPROM.write(adressEncoder, 192);
+  delay(100);
 
 
   // READING CC VALUES FROM EEPROM
@@ -254,6 +265,7 @@ void setup() {
   epromvalueVolumeCC = EEPROM.read(adressVolume);
   epromvalueDetuneCC = EEPROM.read(adressDetune);
   epromvalueExpressionCC = EEPROM.read(adressExpression);
+  epromvalueEncoderCC = EEPROM.read(adressEncoder);
 
   Serial.println("CC INITIALISATION");
   Serial.print("JoyX CC");
@@ -277,6 +289,9 @@ void setup() {
   Serial.print("Expression CC");
   Serial.print("\t");
   Serial.println(epromvalueExpressionCC);
+  Serial.print("Encoder CC");
+  Serial.print("\t");
+  Serial.println(epromvalueEncoderCC);
   delay(5000);
 
   
@@ -285,26 +300,42 @@ void setup() {
 void loop() {
   int pressure = analogRead(PRESSURE_PIN);
   
+  //Sends Pressure to MIDI OUT
   pressureControlledMIDI volume(pMin, epromvalueVolumeCC, pressureCurve, lPressureCurve, 2);
   pressureControlledMIDI detune(pMin, epromvalueDetuneCC, detunes, lPressureCurve, 64);
-  
   volume.update(pressure, channel);
   detune.update(pressure, channel);
   
+  //Sends Slider L&R  to MIDI OUT
   //Slider leftSlider(SLIDER_0_PIN, epromvalueSliderLCC);
   //Slider rightSlider(SLIDER_1_PIN, epromvalueSliderRCC);
   //leftSlider.update(channel);
   //rightSlider.update(channel);
   
+  //Sends JOY XY  to MIDI OUT
   Slider joyX(JOYSTICK_X_PIN, epromvalueJoyXCC);
   Slider joyY(JOYSTICK_Y_PIN, epromvalueJoyYCC);
   joyX.update(channel);
   joyY.update(channel);
   
+ //Sends NOTE  to MIDI OUT
   newNote = readNote(baseOctave);
   if (newNote != oldNote) {
     sendNote(channel, notes[oldNote], 0);
     sendNote(channel, notes[newNote], midiMax);
     oldNote = newNote;
   }
+
+  //Sends Encoder (Program chnge) to MIDI OUT
+   encoderN = digitalRead(encoder0PinA);
+   if ((encoder0PinALast == LOW) && (encoderN == HIGH)) {
+     if (digitalRead(encoder0PinB) == LOW) {
+       encoder0Pos++;
+     } else {
+       encoder0Pos--;
+     }
+     sendCC(channel, epromvalueEncoderCC, encoder0Pos);
+  } 
+  encoder0PinALast = encoderN;
 }
+ 
