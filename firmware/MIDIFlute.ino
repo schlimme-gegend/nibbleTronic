@@ -1,10 +1,9 @@
- 
 #include <EEPROM.h>
 
 // defining pin assignments as macros to save precious RAM for variables
 #define PRESSURE_PIN A0
 #define OCTAVE_PIN A1
-#define SLIDER_0_PIN A11
+#define SLIDER_0_PIN A4
 #define SLIDER_1_PIN A5
 #define JOYSTICK_X_PIN A2
 #define JOYSTICK_Y_PIN A3
@@ -14,7 +13,7 @@
 #define encoder0PinA 11
 #define encoder0PinB 12
 //#define MIDILEARNMODE_PIN 10
-#define LEARNMIDI_PIN 10
+#define LEARNMIDI_PIN 12
 
 //NOTE SWITCHES
 #define NOTE_0_PIN 4
@@ -239,15 +238,15 @@ void setup() {
   channel = 0;
 
   // WRITING CC VALUES TO EEPROM - WORKARROUND FOR TESTING - WILL BE DONE BY MIDI LEARN LATER
-  EEPROM.write(addressjoyX, 21);
+  EEPROM.write(addressjoyX, 22);
   delay(100);
-  EEPROM.write(addressjoyY, 22);
+  EEPROM.write(addressjoyY, 21);
   delay(100);
-  EEPROM.write(adressSliderL, 4);
+  EEPROM.write(adressSliderL, 24);
   delay(100);
-  EEPROM.write(adressSliderR, 16);
+  EEPROM.write(adressSliderR, 25);
   delay(100);
-  EEPROM.write(adressVolume, 0x07);
+  EEPROM.write(adressVolume, 7);
   delay(100);
   EEPROM.write(adressDetune, 0x2D);
   delay(100);
@@ -300,25 +299,22 @@ void setup() {
 void loop() {
   int pressure = analogRead(PRESSURE_PIN);
   
-  //Sends Pressure to MIDI OUT
   pressureControlledMIDI volume(pMin, epromvalueVolumeCC, pressureCurve, lPressureCurve, 2);
   pressureControlledMIDI detune(pMin, epromvalueDetuneCC, detunes, lPressureCurve, 64);
+  
   volume.update(pressure, channel);
   detune.update(pressure, channel);
   
-  //Sends Slider L&R  to MIDI OUT
-  //Slider leftSlider(SLIDER_0_PIN, epromvalueSliderLCC);
-  //Slider rightSlider(SLIDER_1_PIN, epromvalueSliderRCC);
-  //leftSlider.update(channel);
-  //rightSlider.update(channel);
+  Slider leftSlider(SLIDER_0_PIN, epromvalueSliderLCC);
+  Slider rightSlider(SLIDER_1_PIN, epromvalueSliderRCC);
+  leftSlider.update(channel);
+  rightSlider.update(channel);
   
-  //Sends JOY XY  to MIDI OUT
   Slider joyX(JOYSTICK_X_PIN, epromvalueJoyXCC);
-  Slider joyY(JOYSTICK_Y_PIN, epromvalueJoyYCC);
+  Slider joyY(JOYSTICK_Y_PIN, epromvalueJoyYCC, 1);
   joyX.update(channel);
   joyY.update(channel);
   
- //Sends NOTE  to MIDI OUT
   newNote = readNote(baseOctave);
   if (newNote != oldNote) {
     sendNote(channel, notes[oldNote], 0);
@@ -326,13 +322,12 @@ void loop() {
     oldNote = newNote;
   }
 
-  //Sends Encoder (Program chnge) to MIDI OUT
    encoderN = digitalRead(encoder0PinA);
    if ((encoder0PinALast == LOW) && (encoderN == HIGH)) {
      if (digitalRead(encoder0PinB) == LOW) {
-       encoder0Pos++;
-     } else {
        encoder0Pos--;
+     } else {
+       encoder0Pos++;
      }
      sendCC(channel, epromvalueEncoderCC, encoder0Pos);
   } 
