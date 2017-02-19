@@ -40,6 +40,8 @@ const byte octaves[] = {0, 14, 28, 42, 56, 70, 84, 98, 112}; // nine octaves
 const byte octaveRange = 4; // This is the number of octaves that make up the range of the octave  slider
 const byte baseOctave = 2;  // The lowest selectable octave
 
+const byte slidertolerance = 3;       // Noise Reduction for sliders to prevent joystick noise in center position
+
 void sendCC(byte channel, byte controller, byte value) {
   Serial1.write(cc + channel);
   Serial1.write(controller);
@@ -117,8 +119,9 @@ class Slider{
     }
     void update(byte channel){
       newValue = analogRead(_pin);
-      
       if (newValue != oldValue){
+        signed char sliderdelta = abs(oldValue - newValue);
+        if(sliderdelta > slidertolerance){
         if(_invert){
           sendCC(channel, _CC_target, map(newValue, 0, 1023, 127, 0));
         }else{
@@ -127,13 +130,14 @@ class Slider{
         oldValue = newValue;
       }
     }
+    }
 };
 
 
 byte getOctave(byte start = 0) {
   byte end = start + octaveRange - 1;
   int sliderValue = analogRead(OCTAVE_PIN);
-  byte octaveIndex = map(sliderValue, 0, 1023, start, end);
+  byte octaveIndex = map(sliderValue, 0, 1000, start, end);
   return octaves[octaveIndex];
 }
 
@@ -218,5 +222,4 @@ void loop() {
     oldNote = newNote;
   }
 }
-
 
