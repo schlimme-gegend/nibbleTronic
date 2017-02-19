@@ -181,10 +181,10 @@ byte channel,
      
 pressureControlledMIDI volume(pMin, cc_volume, pressureCurve, lPressureCurve, 2);
 pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0);
-//Slider leftSlider(SLIDER_0_PIN, 1);
-//Slider rightSlider(SLIDER_1_PIN, 16);
-Slider joyX(JOYSTICK_X_PIN, 1);
-Slider joyY(JOYSTICK_Y_PIN, 2);
+Slider leftSlider(SLIDER_0_PIN, 4);
+Slider rightSlider(SLIDER_1_PIN, 5);
+Slider joyX(JOYSTICK_X_PIN, 2);
+Slider joyY(JOYSTICK_Y_PIN, 3);
 
 void setup() {
   Serial.begin(9600);

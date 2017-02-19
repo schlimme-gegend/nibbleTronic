@@ -1,4 +1,5 @@
 EESchema Schematic File Version 2
+LIBS:nibbletronic_KICAD-rescue
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -166,7 +167,7 @@ F 3 "" H 5850 4000 50  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L POT RV3
+L POT-RESCUE-nibbletronic_KICAD RV3
 U 1 1 574F2601
 P 5700 2600
 F 0 "RV3" H 5700 2520 50  0000 C CNN
@@ -188,7 +189,7 @@ F 3 "" H 6775 2050 60  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Battery BT1
+L Battery-RESCUE-nibbletronic_KICAD BT1
 U 1 1 577E5E4D
 P 6150 1450
 F 0 "BT1" H 6250 1500 50  0000 L CNN
@@ -199,7 +200,7 @@ F 3 "" V 6150 1490 50  0000 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L POT RV1
+L POT-RESCUE-nibbletronic_KICAD RV1
 U 1 1 577E60FF
 P 4000 5050
 F 0 "RV1" H 4000 4970 50  0000 C CNN
@@ -210,7 +211,7 @@ F 3 "" H 4000 5050 50  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L POT RV2
+L POT-RESCUE-nibbletronic_KICAD RV2
 U 1 1 577E6156
 P 4000 5400
 F 0 "RV2" H 4000 5320 50  0000 C CNN

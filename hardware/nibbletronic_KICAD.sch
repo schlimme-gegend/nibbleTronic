@@ -200,17 +200,6 @@ F 3 "" V 6150 1490 50  0000 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L POT-RESCUE-nibbletronic_KICAD RV1
-U 1 1 577E60FF
-P 4000 5050
-F 0 "RV1" H 4000 4970 50  0000 C CNN
-F 1 "10k" H 4000 5050 50  0000 C CNN
-F 2 "CustomParts:ALPS_402125" H 4000 5050 50  0001 C CNN
-F 3 "" H 4000 5050 50  0000 C CNN
-	1    4000 5050
-	1    0    0    -1  
-$EndComp
-$Comp
 L POT-RESCUE-nibbletronic_KICAD RV2
 U 1 1 577E6156
 P 4000 5400
@@ -359,7 +348,7 @@ Wire Wire Line
 Connection ~ 2600 3250
 Connection ~ 2600 3750
 Wire Wire Line
-	3000 2000 3000 2600
+	3000 2000 3000 2900
 Wire Wire Line
 	1400 2000 3000 2000
 Wire Wire Line
@@ -381,10 +370,6 @@ Wire Wire Line
 Wire Wire Line
 	1250 3900 2850 3900
 Wire Wire Line
-	2850 3000 4100 3000
-Wire Wire Line
-	4100 3100 2950 3100
-Wire Wire Line
 	1300 3850 2950 3850
 Wire Wire Line
 	2600 3750 2400 3750
@@ -396,8 +381,6 @@ Wire Wire Line
 	3200 2500 3200 1750
 Wire Wire Line
 	4000 1250 4150 1250
-Wire Wire Line
-	3000 2600 4100 2600
 Wire Wire Line
 	2400 2150 2500 2150
 Wire Wire Line
@@ -415,12 +398,6 @@ Wire Wire Line
 	2500 4550 2650 4550
 Wire Wire Line
 	2600 4750 2650 4750
-Wire Wire Line
-	2750 4000 2750 2900
-Wire Wire Line
-	2850 3900 2850 3000
-Wire Wire Line
-	2950 3850 2950 3100
 Wire Wire Line
 	5100 3500 5700 3500
 Wire Wire Line
@@ -446,19 +423,7 @@ Wire Wire Line
 Wire Wire Line
 	7300 2900 7300 2150
 Wire Wire Line
-	3950 3300 3950 4900
-Wire Wire Line
-	3950 4900 4000 4900
-Wire Wire Line
-	4100 3500 4000 3500
-Wire Wire Line
-	4000 3500 4000 4800
-Wire Wire Line
-	4000 4800 4300 4800
-Wire Wire Line
-	4300 4800 4300 5250
-Wire Wire Line
-	4300 5250 4000 5250
+	4000 5250 5300 5250
 Wire Wire Line
 	5100 2800 5300 2800
 Wire Wire Line
@@ -495,12 +460,6 @@ Wire Wire Line
 Wire Wire Line
 	4450 1250 4750 1250
 Wire Wire Line
-	2750 2900 4100 2900
-Wire Wire Line
-	4100 3300 3950 3300
-Wire Wire Line
-	3800 3200 4100 3200
-Wire Wire Line
 	5550 4000 5550 3600
 $Comp
 L D D1
@@ -535,7 +494,7 @@ Wire Wire Line
 Wire Wire Line
 	5250 2500 5100 2500
 Wire Wire Line
-	3800 3200 3800 2150
+	3800 2150 3800 3300
 Wire Wire Line
 	3800 2150 6200 2150
 Wire Wire Line
@@ -544,4 +503,41 @@ Wire Wire Line
 	6150 4900 6500 4900
 Text Label 6350 4900 0    60   ~ 0
 REF
+$Comp
+L POT-RESCUE-nibbletronic_KICAD RV1
+U 1 1 577E60FF
+P 4000 5050
+F 0 "RV1" H 4000 4970 50  0000 C CNN
+F 1 "10k" H 4000 5050 50  0000 C CNN
+F 2 "CustomParts:ALPS_402125" H 4000 5050 50  0001 C CNN
+F 3 "" H 4000 5050 50  0000 C CNN
+	1    4000 5050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5100 3200 5250 3200
+Wire Wire Line
+	5250 3200 5250 4900
+Wire Wire Line
+	5250 4900 4000 4900
+Wire Wire Line
+	5100 3100 5300 3100
+Wire Wire Line
+	5300 3100 5300 5250
+Wire Wire Line
+	3000 2900 4100 2900
+Wire Wire Line
+	2750 4000 2750 3000
+Wire Wire Line
+	2750 3000 4100 3000
+Wire Wire Line
+	2850 3900 2850 3100
+Wire Wire Line
+	2850 3100 4100 3100
+Wire Wire Line
+	2950 3850 2950 3200
+Wire Wire Line
+	2950 3200 4100 3200
+Wire Wire Line
+	3800 3300 4100 3300
 $EndSCHEMATC
