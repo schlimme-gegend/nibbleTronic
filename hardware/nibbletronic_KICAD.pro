@@ -1,4 +1,4 @@
-update=Mi 25 Jan 2017 15:11:40 CET
+update=20/02/2017 22:30:02
 version=1
 last_client=kicad
 [pcbnew]
@@ -33,8 +33,6 @@ NetFmtName=
 SpiceForceRefPrefix=0
 SpiceUseNetNumbers=0
 LabSize=60
-[general]
-version=1
 [eeschema]
 version=1
 LibDir=
@@ -70,3 +68,5 @@ LibName28=atmel
 LibName29=contrib
 LibName30=valves
 LibName31=nibbletronic_custom_components
+[general]
+version=1
