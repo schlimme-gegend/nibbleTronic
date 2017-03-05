@@ -1,4 +1,6 @@
 #include <EEPROM.h>
+#include <Arduino.h>
+#include <TM1637Display.h>
 
 // defining pin assignments as macros to save precious RAM for variables
 #define PRESSURE_PIN A0
@@ -12,15 +14,21 @@
 // Rotary ENCODER
 #define encoder0PinA 11
 #define encoder0PinB 12
-//#define MIDILEARNMODE_PIN 10
-#define LEARNMIDI_PIN 12
+#define encoder1PinA 9
+#define encoder1PinB 0
 
 //NOTE SWITCHES
-#define NOTE_0_PIN 4
-#define NOTE_1_PIN 3
-#define NOTE_2_PIN 2
-#define NOTE_3_PIN 0
+#define NOTE_0_PIN 3 //7
+#define NOTE_1_PIN 4 //3
+#define NOTE_2_PIN 5 //5
+#define NOTE_3_PIN 7 //
 
+// Module connection pins (Digital Pins)
+#define CLK 2
+#define DIO 12
+TM1637Display display(CLK, DIO);
+
+// 0 = note4   13=note2  9=n3
 // the current address in the EEPROM (i.e. which byte we're going to write)
 #define addressjoyX 0
 #define addressjoyY 1
@@ -29,7 +37,8 @@
 #define adressVolume 4
 #define adressDetune 5
 #define adressExpression 6
-#define adressEncoder 6
+#define adressEncoder 7
+#define adressEncoder1 8
 
 // Variables for assignng CC values from EPROM and write into in MIDI learn mode
 byte epromvalueJoyXCC;
@@ -40,11 +49,15 @@ byte epromvalueVolumeCC;
 byte epromvalueDetuneCC;
 byte epromvalueExpressionCC;
 byte epromvalueEncoderCC;
+byte epromvalueEncoder1CC;
 
 //Variables for ENCODER
  byte encoder0Pos = 1;
  byte encoder0PinALast = LOW;
  byte encoderN = LOW;
+ byte encoder1Pos = 1;
+ byte encoder1PinALast = LOW;
+ byte encoder1N = LOW;
  
 // defining constants for MIDI commands (First transmitted byte)
 const byte playNote = 0x90;   // Note on
@@ -232,19 +245,21 @@ void setup() {
   pinMode(PRESSURE_PIN, INPUT);
   pinMode (encoder0PinA,INPUT);
   pinMode (encoder0PinB,INPUT);
+  pinMode (encoder1PinA,INPUT);
+  pinMode (encoder1PinB,INPUT);
 
   newNote = notes[0];
   oldNote = notes[0];
   channel = 0;
 
   // WRITING CC VALUES TO EEPROM - WORKARROUND FOR TESTING - WILL BE DONE BY MIDI LEARN LATER
-  EEPROM.write(addressjoyX, 22);
+  EEPROM.write(addressjoyX, 23);
   delay(100);
-  EEPROM.write(addressjoyY, 21);
+  EEPROM.write(addressjoyY, 20);
   delay(100);
-  EEPROM.write(adressSliderL, 24);
+  EEPROM.write(adressSliderL, 22);
   delay(100);
-  EEPROM.write(adressSliderR, 25);
+  EEPROM.write(adressSliderR, 21);
   delay(100);
   EEPROM.write(adressVolume, 7);
   delay(100);
@@ -254,7 +269,8 @@ void setup() {
   delay(100);
   EEPROM.write(adressEncoder, 192);
   delay(100);
-
+  EEPROM.write(adressEncoder1, 190);
+  delay(100);
 
   // READING CC VALUES FROM EEPROM
   epromvalueJoyXCC = EEPROM.read(addressjoyX);
@@ -265,6 +281,7 @@ void setup() {
   epromvalueDetuneCC = EEPROM.read(adressDetune);
   epromvalueExpressionCC = EEPROM.read(adressExpression);
   epromvalueEncoderCC = EEPROM.read(adressEncoder);
+  epromvalueEncoder1CC = EEPROM.read(adressEncoder1);
 
   Serial.println("CC INITIALISATION");
   Serial.print("JoyX CC");
@@ -291,6 +308,9 @@ void setup() {
   Serial.print("Encoder CC");
   Serial.print("\t");
   Serial.println(epromvalueEncoderCC);
+  Serial.print("Encoder1 CC");
+  Serial.print("\t");
+  Serial.println(epromvalueEncoder1CC);
   delay(5000);
 
   
@@ -332,5 +352,25 @@ void loop() {
      sendCC(channel, epromvalueEncoderCC, encoder0Pos);
   } 
   encoder0PinALast = encoderN;
+
+   encoder1N = digitalRead(encoder1PinA);
+   if ((encoder1PinALast == LOW) && (encoder1N == HIGH)) {
+     if (digitalRead(encoder1PinB) == LOW) {
+       encoder1Pos--;
+     } else {
+       encoder1Pos++;
+     }
+     sendCC(channel, epromvalueEncoder1CC, encoder1Pos);
+  } 
+  encoder1PinALast = encoder1N;
+
+  uint8_t data[] = { 0xff, 0xff, 0xff, 0xff };
+  display.setBrightness(0x0f);
+
+  bool lz = false;
+  int dpl = map(pressure, 0, 1023, 0, 127);
+    display.showNumberDec(dpl, lz);
+  lz = true;
+
+  
 }
- 
