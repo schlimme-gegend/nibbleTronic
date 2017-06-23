@@ -1,23 +1,69 @@
+#include <EEPROM.h>
+#include <Arduino.h>
+#include <TM1637Display.h>
+
 // defining pin assignments as macros to save precious RAM for variables
 #define PRESSURE_PIN A0
 #define OCTAVE_PIN A1
-#define NOTE_0_PIN 4
-#define NOTE_1_PIN 3
-#define NOTE_2_PIN 2
-#define NOTE_3_PIN 0
-#define SLIDER_0_PIN A11
+#define SLIDER_0_PIN A4
 #define SLIDER_1_PIN A5
 #define JOYSTICK_X_PIN A2
 #define JOYSTICK_Y_PIN A3
 
+
+// Rotary ENCODER
+#define encoder0PinA 11
+#define encoder0PinB 12
+#define encoder1PinA 9
+#define encoder1PinB 0
+
+//NOTE SWITCHES
+#define NOTE_0_PIN 3 //7
+#define NOTE_1_PIN 4 //3
+#define NOTE_2_PIN 5 //5
+#define NOTE_3_PIN 7 //
+
+// Module connection pins (Digital Pins)
+#define CLK 2
+#define DIO 12
+TM1637Display display(CLK, DIO);
+
+// 0 = note4   13=note2  9=n3
+// the current address in the EEPROM (i.e. which byte we're going to write)
+#define addressjoyX 0
+#define addressjoyY 1
+#define adressSliderL 2
+#define adressSliderR 3
+#define adressVolume 4
+#define adressDetune 5
+#define adressExpression 6
+#define adressEncoder 7
+#define adressEncoder1 8
+
+// Variables for assignng CC values from EPROM and write into in MIDI learn mode
+byte epromvalueJoyXCC;
+byte epromvalueJoyYCC;
+byte epromvalueSliderLCC;
+byte epromvalueSliderRCC;
+byte epromvalueVolumeCC;
+byte epromvalueDetuneCC;
+byte epromvalueExpressionCC;
+byte epromvalueEncoderCC;
+byte epromvalueEncoder1CC;
+
+//Variables for ENCODER
+ byte encoder0Pos = 1;
+ byte encoder0PinALast = LOW;
+ byte encoderN = LOW;
+ byte encoder1Pos = 1;
+ byte encoder1PinALast = LOW;
+ byte encoder1N = LOW;
+ 
 // defining constants for MIDI commands (First transmitted byte)
 const byte playNote = 0x90;   // Note on
 const byte pitchBend = 0x70;  // Pitch bend
 const byte cc = 0xB0;         // Continous Controller
 // ...for MIDI parameters (Second and third transmitted byte)
-const byte cc_volume = 0x07;  // Selects channel volume (coarse) as CC target
-const byte cc_expr = 0xB;     // Selects Expression as CC target This is interpreted as volume by the Volca Bass
-const byte cc_detune = 0x2D;
 const byte midiMax = 0x7F;    // The highest possible parameter value (127 or 0b1111111)
 const byte midiMin = 0;       // A zero, just giving it a fancy name here
 
@@ -183,12 +229,9 @@ byte channel,
      newNote,
      oldNote;
      
-pressureControlledMIDI volume(pMin, cc_volume, pressureCurve, lPressureCurve, 2);
-pressureControlledMIDI detune(pMin, cc_detune, detunes, lPressureCurve, 0);
-Slider leftSlider(SLIDER_0_PIN, 4);
-Slider rightSlider(SLIDER_1_PIN, 5);
-Slider joyX(JOYSTICK_X_PIN, 2);
-Slider joyY(JOYSTICK_Y_PIN, 3);
+
+
+
 
 void setup() {
   Serial.begin(9600);
@@ -200,18 +243,95 @@ void setup() {
   pinMode(NOTE_3_PIN, INPUT_PULLUP);
   pinMode(OCTAVE_PIN, INPUT);
   pinMode(PRESSURE_PIN, INPUT);
+  pinMode (encoder0PinA,INPUT);
+  pinMode (encoder0PinB,INPUT);
+  pinMode (encoder1PinA,INPUT);
+  pinMode (encoder1PinB,INPUT);
 
   newNote = notes[0];
   oldNote = notes[0];
   channel = 0;
+
+  // WRITING CC VALUES TO EEPROM - WORKARROUND FOR TESTING - WILL BE DONE BY MIDI LEARN LATER
+  EEPROM.write(addressjoyX, 23);
+  delay(100);
+  EEPROM.write(addressjoyY, 20);
+  delay(100);
+  EEPROM.write(adressSliderL, 22);
+  delay(100);
+  EEPROM.write(adressSliderR, 21);
+  delay(100);
+  EEPROM.write(adressVolume, 7);
+  delay(100);
+  EEPROM.write(adressDetune, 0x2D);
+  delay(100);
+  EEPROM.write(adressExpression, 0xB);
+  delay(100);
+  EEPROM.write(adressEncoder, 192);
+  delay(100);
+  EEPROM.write(adressEncoder1, 190);
+  delay(100);
+
+  // READING CC VALUES FROM EEPROM
+  epromvalueJoyXCC = EEPROM.read(addressjoyX);
+  epromvalueJoyYCC = EEPROM.read(addressjoyY);
+  epromvalueSliderLCC = EEPROM.read(adressSliderL);
+  epromvalueSliderRCC = EEPROM.read(adressSliderR);
+  epromvalueVolumeCC = EEPROM.read(adressVolume);
+  epromvalueDetuneCC = EEPROM.read(adressDetune);
+  epromvalueExpressionCC = EEPROM.read(adressExpression);
+  epromvalueEncoderCC = EEPROM.read(adressEncoder);
+  epromvalueEncoder1CC = EEPROM.read(adressEncoder1);
+
+  Serial.println("CC INITIALISATION");
+  Serial.print("JoyX CC");
+  Serial.print("\t");
+  Serial.println(epromvalueJoyXCC);
+  Serial.print("JoyY CC");
+  Serial.print("\t");
+  Serial.println(epromvalueJoyYCC);
+  Serial.print("SilderL CC");
+  Serial.print("\t");
+  Serial.println(epromvalueSliderLCC);
+  Serial.print("SliderR CC");
+  Serial.print("\t");
+  Serial.println(epromvalueSliderRCC);
+  Serial.print("Volume CC");
+  Serial.print("\t");
+  Serial.println(epromvalueVolumeCC);
+  Serial.print("Detune CC");
+  Serial.print("\t");
+  Serial.println(epromvalueDetuneCC);
+  Serial.print("Expression CC");
+  Serial.print("\t");
+  Serial.println(epromvalueExpressionCC);
+  Serial.print("Encoder CC");
+  Serial.print("\t");
+  Serial.println(epromvalueEncoderCC);
+  Serial.print("Encoder1 CC");
+  Serial.print("\t");
+  Serial.println(epromvalueEncoder1CC);
+  delay(5000);
+
+  
 }
 
 void loop() {
   int pressure = analogRead(PRESSURE_PIN);
+  
+  pressureControlledMIDI volume(pMin, epromvalueVolumeCC, pressureCurve, lPressureCurve, 2);
+  pressureControlledMIDI detune(pMin, epromvalueDetuneCC, detunes, lPressureCurve, 64);
+  
   volume.update(pressure, channel);
   detune.update(pressure, channel);
-  //leftSlider.update(channel);
-  //rightSlider.update(channel);
+  
+  Slider leftSlider(SLIDER_0_PIN, epromvalueSliderLCC);
+  Slider rightSlider(SLIDER_1_PIN, epromvalueSliderRCC);
+  leftSlider.update(channel);
+  rightSlider.update(channel);
+  
+  Slider joyX(JOYSTICK_X_PIN, epromvalueJoyXCC);
+  Slider joyY(JOYSTICK_Y_PIN, epromvalueJoyYCC, 1);
   joyX.update(channel);
   joyY.update(channel);
   
@@ -221,5 +341,36 @@ void loop() {
     sendNote(channel, notes[newNote], midiMax);
     oldNote = newNote;
   }
-}
 
+   encoderN = digitalRead(encoder0PinA);
+   if ((encoder0PinALast == LOW) && (encoderN == HIGH)) {
+     if (digitalRead(encoder0PinB) == LOW) {
+       encoder0Pos--;
+     } else {
+       encoder0Pos++;
+     }
+     sendCC(channel, epromvalueEncoderCC, encoder0Pos);
+  } 
+  encoder0PinALast = encoderN;
+
+   encoder1N = digitalRead(encoder1PinA);
+   if ((encoder1PinALast == LOW) && (encoder1N == HIGH)) {
+     if (digitalRead(encoder1PinB) == LOW) {
+       encoder1Pos--;
+     } else {
+       encoder1Pos++;
+     }
+     sendCC(channel, epromvalueEncoder1CC, encoder1Pos);
+  } 
+  encoder1PinALast = encoder1N;
+
+  uint8_t data[] = { 0xff, 0xff, 0xff, 0xff };
+  display.setBrightness(0x0f);
+
+  bool lz = false;
+  int dpl = map(pressure, 0, 1023, 0, 127);
+    display.showNumberDec(dpl, lz);
+  lz = true;
+
+  
+}
